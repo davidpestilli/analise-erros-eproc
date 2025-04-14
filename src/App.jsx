@@ -1,35 +1,31 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+
+import { useState } from 'react';
+import UploadForm from './components/UploadForm';
+import FiltroPeriodo from './components/FiltroPeriodo';
+import PainelResumo from './components/PainelResumo';
+import ChartErroPorCategoria from './components/ChartErroPorCategoria';
+import ChartCausaFrequente from './components/ChartCausaFrequente';
+import ChartSolucaoFrequente from './components/ChartSolucaoFrequente';
+import ResultTable from './components/ResultTable';
+import Filters from './components/Filters';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [periodoSelecionado, setPeriodoSelecionado] = useState('todos');
+  const [filtros, setFiltros] = useState({});
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="w-full px-4">
+      <UploadForm onUploadSuccess={() => {}} />
+
+      <FiltroPeriodo periodo={periodoSelecionado} setPeriodo={setPeriodoSelecionado} />
+      <Filters onFiltro={setFiltros} />
+      <PainelResumo periodoSelecionado={periodoSelecionado} />
+      <ChartErroPorCategoria periodoSelecionado={periodoSelecionado} />
+      <ChartCausaFrequente periodoSelecionado={periodoSelecionado} />
+      <ChartSolucaoFrequente periodoSelecionado={periodoSelecionado} />
+      <ResultTable periodoSelecionado={periodoSelecionado} filtros={filtros} />
+    </div>
+  );
 }
 
-export default App
+export default App;
