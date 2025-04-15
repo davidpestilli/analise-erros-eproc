@@ -15,10 +15,12 @@
   "dependencies": {
     "@kenjiuno/msgreader": "^1.22.0",
     "@supabase/supabase-js": "^2.49.4",
+    "file-saver": "^2.0.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.2",
-    "sonner": "^2.0.3"
+    "sonner": "^2.0.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
