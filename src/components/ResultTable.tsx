@@ -14,9 +14,10 @@ type ErroProcessado = {
 
 type Props = {
   periodoSelecionado: string;
+  tabelaRef: React.RefObject<HTMLDivElement>;
 };
 
-function ResultTable({ periodoSelecionado }: Props) {
+function ResultTable({ periodoSelecionado, tabelaRef }: Props) {
   const [resultados, setResultados] = useState<ErroProcessado[]>([]);
   const [carregando, setCarregando] = useState(false);
   const [filtroCategoria, setFiltroCategoria] = useState('');
@@ -30,11 +31,11 @@ function ResultTable({ periodoSelecionado }: Props) {
       Solução: item.solucao,
       Data: new Date(item.criado_em).toLocaleString(),
     }));
-  
+
     const ws = XLSX.utils.json_to_sheet(dadosParaExportar);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Erros');
-  
+
     const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
     saveAs(blob, `erros_processados_${Date.now()}.xlsx`);
@@ -67,39 +68,38 @@ function ResultTable({ periodoSelecionado }: Props) {
     carregarResultados();
   }, [periodoSelecionado]);
 
-  // Aplica os filtros locais
   const resultadosFiltrados = resultados.filter((item) =>
     item.categoria.toLowerCase().includes(filtroCategoria.toLowerCase()) &&
     item.nome_arquivo.toLowerCase().includes(filtroArquivo.toLowerCase())
   );
 
   return (
-    <div className="mt-10 px-4">
+    <div ref={tabelaRef} className="mt-10 px-4">
       <h2 className="text-2xl font-bold mb-4">Resultados da Análise</h2>
 
-{/* Filtros e botão de exportação */}
-<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 max-w-6xl">
-  <input
-    type="text"
-    placeholder="Filtrar por categoria"
-    value={filtroCategoria}
-    onChange={(e) => setFiltroCategoria(e.target.value)}
-    className="border p-2 rounded w-full"
-  />
-  <input
-    type="text"
-    placeholder="Filtrar por nome do arquivo"
-    value={filtroArquivo}
-    onChange={(e) => setFiltroArquivo(e.target.value)}
-    className="border p-2 rounded w-full"
-  />
-  <button
-    onClick={exportarParaExcel}
-    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full"
-  >
-    Baixar como Excel
-  </button>
-  </div>
+      {/* Filtros e botão de exportação */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 max-w-6xl">
+        <input
+          type="text"
+          placeholder="Filtrar por categoria"
+          value={filtroCategoria}
+          onChange={(e) => setFiltroCategoria(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          placeholder="Filtrar por nome do arquivo"
+          value={filtroArquivo}
+          onChange={(e) => setFiltroArquivo(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+        <button
+          onClick={exportarParaExcel}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full"
+        >
+          Baixar como Excel
+        </button>
+      </div>
 
       {carregando ? (
         <p>Carregando...</p>
