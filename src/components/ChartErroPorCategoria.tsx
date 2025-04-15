@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#b36bff', '#ff6666'];
 
@@ -52,26 +51,30 @@ function ChartErroPorCategoria({ periodoSelecionado }: Props) {
   }, [periodoSelecionado]);
 
   return (
-    <div className="mt-10">
-      <h2 className="text-2xl font-bold mb-4">Erros por Categoria</h2>
-      <PieChart width={400} height={300}>
-        <Pie
-          data={dados}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          outerRadius={100}
-          fill="#8884d8"
-          dataKey="value"
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-        >
-          {dados.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip />
-        <Legend />
-      </PieChart>
+    <div className="bg-white p-8 rounded-xl shadow w-full h-[100vh] flex flex-col">
+      <h2 className="text-3xl font-bold mb-6 text-center">Erros por Categoria</h2>
+      <div className="flex-1">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={dados}
+              cx="50%"
+              cy="50%"
+              outerRadius={290}
+              fill="#8884d8"
+              dataKey="value"
+              labelLine={false}
+              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            >
+              {dados.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend layout="horizontal" verticalAlign="bottom" />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

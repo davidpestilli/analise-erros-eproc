@@ -1,29 +1,32 @@
-
 import { useState } from 'react';
 import UploadForm from './components/UploadForm';
-import FiltroPeriodo from './components/FiltroPeriodo';
 import PainelResumo from './components/PainelResumo';
 import ChartErroPorCategoria from './components/ChartErroPorCategoria';
-import ChartCausaFrequente from './components/ChartCausaFrequente';
-import ChartSolucaoFrequente from './components/ChartSolucaoFrequente';
 import ResultTable from './components/ResultTable';
-import Filters from './components/Filters';
 
 function App() {
   const [periodoSelecionado, setPeriodoSelecionado] = useState('todos');
-  const [filtros, setFiltros] = useState({});
 
   return (
-    <div className="w-full px-4">
-      <UploadForm onUploadSuccess={() => {}} />
+    <div className="w-full px-6">
+      {/* Tela dividida em colunas */}
+      <div className="flex flex-col lg:flex-row gap-6 h-screen">
+        {/* Lado esquerdo - Upload + Resumo */}
+        <div className="flex flex-col gap-6 lg:w-1/3 justify-center h-full">
+          <UploadForm onUploadSuccess={() => {}} />
+          <PainelResumo periodoSelecionado={periodoSelecionado} />
+        </div>
 
-      <FiltroPeriodo periodo={periodoSelecionado} setPeriodo={setPeriodoSelecionado} />
-      <Filters onFiltro={setFiltros} />
-      <PainelResumo periodoSelecionado={periodoSelecionado} />
-      <ChartErroPorCategoria periodoSelecionado={periodoSelecionado} />
-      <ChartCausaFrequente periodoSelecionado={periodoSelecionado} />
-      <ChartSolucaoFrequente periodoSelecionado={periodoSelecionado} />
-      <ResultTable periodoSelecionado={periodoSelecionado} filtros={filtros} />
+        {/* Lado direito - Gráfico ocupa altura total */}
+        <div className="flex-1 flex items-center justify-center">
+          <ChartErroPorCategoria periodoSelecionado={periodoSelecionado} />
+        </div>
+      </div>
+
+      {/* Tabela fora da "tela principal" */}
+      <div className="mt-10">
+        <ResultTable periodoSelecionado={periodoSelecionado} filtros={{}} />
+      </div>
     </div>
   );
 }

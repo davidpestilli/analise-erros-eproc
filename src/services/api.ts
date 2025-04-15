@@ -1,14 +1,11 @@
 export async function enviarParaAnalise(nomeArquivo: string, trecho: string) {
   try {
-    const response = await fetch(`${import.meta.env.VITE_FUNCTIONS_URL}/analisar_erro`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        nome_arquivo: nomeArquivo,
-        trecho,
-      }),
+    const response = await fetch(
+      'https://rdkvvigjmowtvhxqlrnp.functions.supabase.co/analisar_erro',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome_arquivo: nomeArquivo, trecho }),
     });
 
     if (!response.ok) {

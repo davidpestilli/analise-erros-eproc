@@ -1,62 +1,114 @@
-// supabase/functions/analisar_erro/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js'
 
 serve(async (req) => {
-  const { nome_arquivo, trecho } = await req.json();
-
-  if (!trecho || !nome_arquivo) {
-    return new Response(JSON.stringify({ error: 'Dados incompletos' }), { status: 400 });
+  // CORS Preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+      },
+    })
   }
 
-  // Chamada à API da DeepSeek
-  const respostaIA = await fetch('https://api.deepseek.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${Deno.env.get('DEEPSEEK_API_KEY')}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: 'Você é um analista de erros do sistema eproc. Abaixo está um log de erro de uma tentativa de distribuição processual. Seu trabalho é:\n\n1. Identificar a causa principal da falha\n2. Atribuir uma categoria curta para o erro (ex: "parte ausente", "juízo inexistente", "competência inválida")\n3. Sugerir uma solução prática\n\nResponda no seguinte formato JSON:\n{\n  "categoria": "<categoria_do_erro>",\n  "causa": "<resumo_da_causa>",\n  "solucao": "<sugestao_de_correcao>"\n}'
-        },
-        {
-          role: 'user',
-          content: trecho
-        }
-      ]
-    })
-  });
-
-  const { choices } = await respostaIA.json();
-  let resultado;
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
 
   try {
-    resultado = JSON.parse(choices?.[0]?.message?.content || '{}');
+    const { nome_arquivo, trecho } = await req.json()
+
+    const respostaIA = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer sk-30ead5f469544586866d18fe075cd694', // substitua aqui
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Você é um analista de erros do sistema eproc. Abaixo está um log de erro de uma tentativa de distribuição processual. Identifique a categoria, causa e solução em JSON.',
+          },
+          { role: 'user', content: trecho },
+        ],
+        stream: false,
+      }),
+    })
+
+    if (!respostaIA.ok) {
+      const erroTexto = await respostaIA.text()
+      console.log('Erro da DeepSeek:', erroTexto)
+      return new Response(JSON.stringify({ erro: 'DeepSeek falhou', detalhe: erroTexto }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      })
+    }
+
+    const resposta = await respostaIA.json()
+    console.log('Resposta completa da IA:', resposta)
+
+    const conteudo = resposta.choices?.[0]?.message?.content || ''
+
+    // 🔍 Parsing do conteúdo JSON vindo como string dentro de markdown
+    const jsonLimpo = conteudo.replace(/```json\n?|```/g, '').trim()
+
+    let categoria = '-'
+    let causa = '-'
+    let solucao = '-'
+
+    try {
+      const jsonExtraido = JSON.parse(jsonLimpo)
+
+      categoria = jsonExtraido.categoria || '-'
+      causa = jsonExtraido.causa || '-'
+
+      if (Array.isArray(jsonExtraido.solucao)) {
+        solucao = jsonExtraido.solucao.join(' | ')
+      } else {
+        solucao = jsonExtraido.solucao || '-'
+      }
+    } catch (e) {
+      console.log('Erro ao fazer parse do JSON da IA:', e)
+    }
+
+    const { error } = await supabase.from('erros_processados').insert([
+      {
+        nome_arquivo,
+        categoria,
+        causa,
+        solucao,
+        criado_em: new Date().toISOString(),
+      },
+    ])
+
+    if (error) {
+      console.log('Erro ao inserir no Supabase:', error.message)
+    }
+
+    return new Response(JSON.stringify({ status: 'sucesso', categoria, causa, solucao }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'Erro ao interpretar resposta da IA' }), { status: 500 });
+    console.log('Erro geral:', e)
+
+    return new Response(JSON.stringify({ erro: 'Falha na função', detalhe: String(e) }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
   }
-
-  // Inserção no banco
-  const supabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!
-  );
-
-  const { error } = await supabaseClient.from('erros_processados').insert({
-    nome_arquivo,
-    categoria: resultado.categoria,
-    causa: resultado.causa,
-    solucao: resultado.solucao
-  });
-
-  if (error) {
-    return new Response(JSON.stringify({ error: 'Erro ao salvar no banco' }), { status: 500 });
-  }
-
-  return new Response(JSON.stringify(resultado), { status: 200 });
-});
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+})

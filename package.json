@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://github.com/davidpestilli/analise-erros-eproc.git",
+  "homepage": "https://davidpestilli.github.io/analise-erros-eproc/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -13,6 +13,7 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@kenjiuno/msgreader": "^1.22.0",
     "@supabase/supabase-js": "^2.49.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
